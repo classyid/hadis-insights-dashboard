@@ -22,7 +22,7 @@ Hadis Insights Dashboard adalah aplikasi web interaktif yang dirancang untuk mem
 
 ## Tangkapan Layar
 
-[Tambahkan tangkapan layar aplikasi di sini](https://blog.classy.id/upload/gambar_berita/9c52bc93766aeeee6cefd1ebf393ed80_20250326081851.png)
+![Tambahkan tangkapan layar aplikasi di sini](https://blog.classy.id/upload/gambar_berita/9c52bc93766aeeee6cefd1ebf393ed80_20250326081851.png)
 
 ## Instalasi
 
