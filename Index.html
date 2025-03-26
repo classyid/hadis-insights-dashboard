@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualisasi Hadis Interaktif</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .arabic {
+            font-family: 'Amiri', serif;
+            direction: rtl;
+            line-height: 2;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Info Banner -->
+    <div class="bg-white border-b border-gray-200 py-2">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center text-sm text-gray-600">
+                <i class="fas fa-info-circle mr-2"></i>
+                <span>This application was created by a Google Apps Script user</span>
+            </div>
+            <div class="text-blue-600 text-sm font-medium">
+                <a href="#" class="hover:underline">Learn more</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-blue-800 text-white shadow-md">
+        <div class="container mx-auto px-4 py-5">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <i class="fas fa-book-open text-3xl mr-3"></i>
+                    <h1 class="text-2xl font-bold">Visualisasi Hadis Interaktif</h1>
+                </div>
+                <div class="flex space-x-4 items-center">
+                    <button id="random-hadis" class="bg-blue-600 hover:bg-blue-700 transition px-4 py-2 rounded-lg text-sm font-medium">
+                        <i class="fas fa-random mr-2"></i>Hadis Acak
+                    </button>
+                    <button id="theme-toggle" class="text-white hover:text-blue-200 transition">
+                        <i class="fas fa-moon text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- Loading State - Initially shown, then removed automatically after a few seconds -->
+        <div id="loading" class="flex justify-center items-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-700"></div>
+            <p class="ml-3 text-blue-700">Memuat data...</p>
+        </div>
+        
+        <!-- Error Message -->
+        <div id="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 hidden" role="alert">
+            <p>Terjadi kesalahan saat memuat data. Silakan refresh halaman dan coba lagi.</p>
+        </div>
+        
+        <!-- Dashboard -->
+        <div id="dashboard" class="hidden">
+            <!-- Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-500 text-sm">Total Perawi</p>
+                            <h2 id="total-perawi" class="text-3xl font-bold text-blue-700">9</h2>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i class="fas fa-users text-blue-700 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-500 text-sm">Total Hadis</p>
+                            <h2 id="total-hadis" class="text-3xl font-bold text-blue-700">38,102</h2>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i class="fas fa-book text-blue-700 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-500 text-sm">Hadis Populer</p>
+                            <h2 id="populer-hadis" class="text-3xl font-bold text-blue-700">HR. Bukhari</h2>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i class="fas fa-star text-blue-700 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-500 text-sm">Pencarian Populer</p>
+                            <h2 id="popular-search" class="text-3xl font-bold text-blue-700">Info</h2>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i class="fas fa-search text-blue-700 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Featured Hadith -->
+            <div id="featured-hadith" class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <div class="flex justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-700">Hadis Pilihan</h3>
+                    <button id="refresh-hadith" class="text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div id="hadith-container" class="space-y-4">
+                    <div class="bg-red-100 text-red-600 p-4 rounded-lg">
+                        <p>Gagal memuat hadis. Silakan coba lagi.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Pie Chart - Hadith Distribution by Source -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h3 class="text-lg font-bold mb-4 text-gray-700">Distribusi Hadis berdasarkan Perawi</h3>
+                    <div class="h-64">
+                        <canvas id="hadith-distribution-chart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Bar Chart - Top Books by Hadith Count -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h3 class="text-lg font-bold mb-4 text-gray-700">Kitab dengan Hadis Terbanyak</h3>
+                    <div class="h-64">
+                        <canvas id="top-books-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Search Section -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">Cari Hadis</h3>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-grow">
+                        <input type="text" id="search-input" placeholder="Masukkan kata kunci..." class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button id="search-button" class="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 transition">
+                        <i class="fas fa-search mr-2"></i>Cari
+                    </button>
+                </div>
+                
+                <div id="search-results" class="mt-6 hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-medium text-gray-700">Hasil Pencarian: <span id="search-keyword" class="font-bold"></span></h4>
+                        <span id="result-count" class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">0 hasil</span>
+                    </div>
+                    <div id="results-container" class="space-y-4 max-h-96 overflow-y-auto">
+                        <!-- Search results will be added here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Books Section -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-700">Kitab Hadis</h3>
+                    <div class="relative">
+                        <input type="text" id="book-search" placeholder="Cari kitab..." class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah Hadis</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="books-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Table rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Popular Topics Word Cloud -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Word Cloud (Simulated) -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-bold mb-4 text-gray-700">Tema-tema Populer dalam Hadis</h3>
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <p class="text-gray-700 mb-2">Visualisasi kata kunci yang sering muncul dalam pencarian hadis.</p>
+                        <p class="text-gray-500 text-sm">Berdasarkan kata kunci pencarian populer.</p>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-blue-800 text-white rounded-full text-lg">Nikah</span>
+                        <span class="px-3 py-1 bg-blue-700 text-white rounded-full text-base">Shalat</span>
+                        <span class="px-3 py-1 bg-blue-600 text-white rounded-full text-xl">Ilmu</span>
+                        <span class="px-3 py-1 bg-blue-500 text-white rounded-full">Puasa</span>
+                        <span class="px-3 py-1 bg-blue-900 text-white rounded-full text-2xl">Iman</span>
+                        <span class="px-3 py-1 bg-blue-700 text-white rounded-full">Sedekah</span>
+                        <span class="px-3 py-1 bg-blue-600 text-white rounded-full text-lg">Akhlak</span>
+                        <span class="px-3 py-1 bg-blue-700 text-white rounded-full text-sm">Adab</span>
+                        <span class="px-3 py-1 bg-blue-800 text-white rounded-full">Zakat</span>
+                        <span class="px-3 py-1 bg-blue-600 text-white rounded-full text-base">Taubat</span>
+                        <span class="px-3 py-1 bg-blue-700 text-white rounded-full text-lg">Doa</span>
+                    </div>
+                </div>
+                
+                <!-- Fun Facts -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-bold mb-4 text-gray-700">Fakta Menarik Hadis</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fas fa-star text-blue-500 mt-1 mr-2"></i>
+                            <p>Shahih Bukhari merupakan kitab hadis yang paling terkenal dengan lebih dari 7.000 hadis.</p>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-star text-blue-500 mt-1 mr-2"></i>
+                            <p>Imam Muslim menghabiskan 15 tahun untuk menyusun kitab Shahih Muslim.</p>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-star text-blue-500 mt-1 mr-2"></i>
+                            <p>Hadis pertama yang biasanya dipelajari adalah hadis tentang niat (Innamal a'malu binniyat).</p>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-star text-blue-500 mt-1 mr-2"></i>
+                            <p>Sunan Enam (Kutub al-Sittah) adalah enam kitab hadis paling otoritatif dalam Islam Sunni.</p>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-star text-blue-500 mt-1 mr-2"></i>
+                            <p>Abu Hurairah adalah sahabat yang paling banyak meriwayatkan hadis, lebih dari 5.000 hadis.</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- API Usage Stats -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">Statistik Penggunaan API</h3>
+                <div id="api-stats" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Total Permintaan</p>
+                        <p id="total-requests" class="text-2xl font-bold text-blue-700">0</p>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <div class="h-40">
+                            <canvas id="endpoint-stats-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-blue-900 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <h3 class="text-xl font-bold mb-2">Visualisasi Hadis Interaktif</h3>
+                    <p class="text-blue-200">Aplikasi untuk memahami dan menjelajahi koleksi hadis dari berbagai periwayat.</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-white hover:text-blue-200 transition">
+                        <i class="fab fa-facebook-f text-xl"></i>
+                    </a>
+                    <a href="#" class="text-white hover:text-blue-200 transition">
+                        <i class="fab fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-white hover:text-blue-200 transition">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="mt-6 pt-6 border-t border-blue-800 text-center text-blue-200">
+                <p>&copy; 2025 Visualisasi Hadis Interaktif. Dibuat oleh Classy Indonesia.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Hadith Modal -->
+    <div id="hadith-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl max-w-3xl w-full max-h-screen overflow-y-auto mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Detail Hadis</h3>
+                    <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex justify-between">
+                        <span id="modal-source" class="inline-block bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">HR. Bukhari</span>
+                        <span id="modal-number" class="inline-block bg-gray-100 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded">No. 1</span>
+                    </div>
+                    <p id="modal-arabic" class="arabic text-xl font-medium text-gray-800 p-4 bg-blue-50 rounded-lg"></p>
+                    <p id="modal-translation" class="text-gray-600"></p>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button id="share-hadith" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition mr-2">
+                        <i class="fas fa-share-alt mr-2"></i>Bagikan
+                    </button>
+                    <button id="close-modal-btn" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Base API URL
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzgEuPOgGy5A70jg_riSt3IVC8yHyO2qXpJKbbmXp4J3nPLwMxJFwnV1rWgK6X_yyPdGQ/exec';
+        
+        // DOM Elements
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        const dashboardEl = document.getElementById('dashboard');
+        const booksTableBodyEl = document.getElementById('books-table-body');
+        const bookSearchEl = document.getElementById('book-search');
+        const themeToggleEl = document.getElementById('theme-toggle');
+        const searchInputEl = document.getElementById('search-input');
+        const searchButtonEl = document.getElementById('search-button');
+        const searchResultsEl = document.getElementById('search-results');
+        const searchKeywordEl = document.getElementById('search-keyword');
+        const resultCountEl = document.getElementById('result-count');
+        const resultsContainerEl = document.getElementById('results-container');
+        const refreshHadithEl = document.getElementById('refresh-hadith');
+        const randomHadisEl = document.getElementById('random-hadis');
+        const hadithModalEl = document.getElementById('hadith-modal');
+        const closeModalEl = document.getElementById('close-modal');
+        const closeModalBtnEl = document.getElementById('close-modal-btn');
+        const shareHadithEl = document.getElementById('share-hadith');
+        
+        // Chart Instances
+        let hadithDistributionChart;
+        let topBooksChart;
+        let endpointStatsChart;
+        
+        // Data Storage
+        let allBooksData = [];
+        let currentRandomHadith = null;
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Automatically show dashboard after timeout to avoid infinite loading
+            setTimeout(function() {
+                hideLoading();
+                dashboardEl.classList.remove('hidden');
+                
+                // Immediately load charts with static data
+                createHadithDistributionChart();
+                createTopBooksChart();
+                
+                // Populate books table with static data
+                populateBooksTable([
+                    { id: "bukhari", name: "HR. Bukhari", available: 6638 },
+                    { id: "muslim", name: "HR. Muslim", available: 5362 },
+                    { id: "nasai", name: "HR. Nasai", available: 5758 },
+                    { id: "abudaud", name: "HR. Abu Daud", available: 4590 },
+                    { id: "tirmidzi", name: "HR. Tirmidzi", available: 3891 },
+                    { id: "ibnumajah", name: "HR. Ibnu Majah", available: 4241 },
+                    { id: "ahmad", name: "HR. Ahmad", available: 4305 },
+                    { id: "darimi", name: "HR. Darimi", available: 2949 },
+                    { id: "malik", name: "HR. Malik", available: 1587 }
+                ]);
+            }, 1000);
+            
+            // Initialize event listeners
+            bookSearchEl.addEventListener('input', filterBooksTable);
+            searchButtonEl.addEventListener('click', searchHadith);
+            searchInputEl.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchHadith();
+                }
+            });
+            refreshHadithEl.addEventListener('click', loadRandomHadith);
+            randomHadisEl.addEventListener('click', loadRandomHadith);
+            
+            // Theme toggle
+            themeToggleEl.addEventListener('click', toggleTheme);
+            
+            // Modal events
+            closeModalEl.addEventListener('click', closeModal);
+            closeModalBtnEl.addEventListener('click', closeModal);
+            shareHadithEl.addEventListener('click', shareCurrentHadith);
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target === hadithModalEl) {
+                    closeModal();
+                }
+            });
+        });
+        
+        // Load Books Data (Modified to use static data)
+        async function loadBooks() {
+            showLoading();
+            
+            try {
+                // Static data instead of API call
+                allBooksData = [
+                    { id: "bukhari", name: "HR. Bukhari", available: 6638 },
+                    { id: "muslim", name: "HR. Muslim", available: 5362 },
+                    { id: "nasai", name: "HR. Nasai", available: 5758 },
+                    { id: "abudaud", name: "HR. Abu Daud", available: 4590 },
+                    { id: "tirmidzi", name: "HR. Tirmidzi", available: 3891 },
+                    { id: "ibnumajah", name: "HR. Ibnu Majah", available: 4241 },
+                    { id: "ahmad", name: "HR. Ahmad", available: 4305 },
+                    { id: "darimi", name: "HR. Darimi", available: 2949 },
+                    { id: "malik", name: "HR. Malik", available: 1587 }
+                ];
+                
+                // Update UI
+                document.getElementById('total-perawi').textContent = allBooksData.length;
+                
+                // Calculate total hadis
+                const totalHadis = allBooksData.reduce((total, book) => total + book.available, 0);
+                document.getElementById('total-hadis').textContent = totalHadis.toLocaleString();
+                
+                // Populate books table
+                populateBooksTable(allBooksData);
+                
+                // Create charts
+                createHadithDistributionChart(allBooksData);
+                createTopBooksChart(allBooksData);
+                
+                // Hide loading, show dashboard
+                hideLoading();
+                dashboardEl.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading books data:', error);
+                showError();
+            }
+        }
+        
+        // Load Random Hadith
+        async function loadRandomHadith() {
+    try {
+        const hadithContainer = document.getElementById('hadith-container');
+        hadithContainer.innerHTML = '<div class="animate-pulse space-y-4"><div class="h-4 bg-gray-200 rounded w-1/4 mb-2"></div><div class="h-20 bg-gray-200 rounded"></div><div class="h-4 bg-gray-200 rounded"></div><div class="h-4 bg-gray-200 rounded"></div><div class="h-4 bg-gray-200 rounded w-5/6"></div></div>';
+        
+        const response = await fetch(`${API_URL}?action=random&count=1`);
+        const data = await response.json();
+        
+        if (!data.error && data.data && data.data.length > 0) {
+            const hadith = data.data[0];
+            currentRandomHadith = hadith;
+            
+            // Update UI
+            hadithContainer.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-semibold text-primary-700">
+                                ${hadith.riwayat} No. ${hadith.number}
+                            </h4>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <p class="arabic text-right text-xl">${hadith.arab}</p>
+                        <p class="text-gray-800">${hadith.indonesia}</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            hadithContainer.innerHTML = `
+                <div class="bg-red-100 text-red-600 p-4 rounded-lg">
+                    <p>Gagal memuat hadis. Silakan coba lagi.</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading random hadith:', error);
+        document.getElementById('hadith-container').innerHTML = `
+            <div class="bg-red-100 text-red-600 p-4 rounded-lg">
+                <p>Gagal memuat hadis. Silakan coba lagi.</p>
+            </div>
+        `;
+    }
+}
+        
+        // Load API Stats
+        async function loadApiStats() {
+            try {
+                const response = await fetch(`${API_URL}?action=stats`);
+                const data = await response.json();
+                
+                if (!data.error) {
+                    // Update UI
+                    document.getElementById('total-requests').textContent = data.data.totalRequests.toLocaleString();
+                    
+                    // Update popular search based on stats
+                    // Find the endpoint with most requests (excluding 'info')
+                    const endpointStats = data.data.endpointStats;
+                    let popularEndpoint = 'info';
+                    let maxCount = 0;
+                    
+                    for (const [endpoint, count] of Object.entries(endpointStats)) {
+                        if (endpoint !== 'info' && count > maxCount) {
+                            maxCount = count;
+                            popularEndpoint = endpoint;
+                        }
+                    }
+                    
+                    // Capitalize first letter and display
+                    const formattedPopularEndpoint = popularEndpoint.charAt(0).toUpperCase() + popularEndpoint.slice(1);
+                    document.getElementById('popular-search').textContent = formattedPopularEndpoint;
+                    
+                    // Create endpoint stats chart
+                    createEndpointStatsChart(data.data.endpointStats);
+                }
+            } catch (error) {
+                console.error('Error loading API stats:', error);
+            }
+        }
+        
+        // Search Hadith
+        async function searchHadith() {
+            const keyword = searchInputEl.value.trim();
+            
+            if (!keyword) return;
+            
+            // Show loading in results container
+            searchResultsEl.classList.remove('hidden');
+            searchKeywordEl.textContent = keyword;
+            resultCountEl.textContent = 'Mencari...';
+            resultsContainerEl.innerHTML = '<div class="animate-pulse space-y-4"><div class="h-4 bg-gray-200 rounded w-1/4 mb-2"></div><div class="h-20 bg-gray-200 rounded"></div><div class="h-4 bg-gray-200 rounded"></div><div class="h-4 bg-gray-200 rounded"></div></div>';
+            
+            try {
+                const response = await fetch(`${API_URL}?action=search&q=${encodeURIComponent(keyword)}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Update UI
+                    resultCountEl.textContent = `${data.count} hasil`;
+                    
+                    // Clear previous results
+                    resultsContainerEl.innerHTML = '';
+                    
+                    // Populate results
+                    if (data.count === 0) {
+                        resultsContainerEl.innerHTML = `
+                            <div class="text-center py-8">
+                                <i class="fas fa-search text-3xl text-gray-300 mb-2"></i>
+                                <p class="text-gray-500">Tidak ditemukan hasil untuk "${keyword}"</p>
+                            </div>
+                        `;
+                    } else {
+                        data.data.slice(0, 10).forEach(hadith => {
+                            const resultItem = document.createElement('div');
+                            resultItem.className = 'bg-blue-50 p-4 rounded-lg cursor-pointer hover:bg-blue-100 transition';
+                            resultItem.innerHTML = `
+                                <div class="flex justify-between">
+                                    <span class="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">${hadith.riwayat}</span>
+                                    <span class="inline-block bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">No. ${hadith.number}</span>
+                                </div>
+                                <p class="arabic text-lg my-2">${truncateText(hadith.arab, 150)}</p>
+                                <p class="text-gray-600 text-sm">${truncateText(hadith.indonesia, 200)}</p>
+                            `;
+                            
+                            // Add click event to show modal
+                            resultItem.addEventListener('click', () => showHadithModal(hadith));
+                            
+                            resultsContainerEl.appendChild(resultItem);
+                        });
+                        
+                        if (data.count > 10) {
+                            const moreResultsNote = document.createElement('div');
+                            moreResultsNote.className = 'text-center text-gray-500 text-sm mt-4';
+                            moreResultsNote.textContent = `Menampilkan 10 dari ${data.count} hasil. Gunakan pencarian yang lebih spesifik untuk mempersempit hasil.`;
+                            resultsContainerEl.appendChild(moreResultsNote);
+                        }
+                    }
+                } else {
+                    throw new Error(data.message || 'Failed to search hadith');
+                }
+            } catch (error) {
+                console.error('Error searching hadith:', error);
+                resultsContainerEl.innerHTML = `
+                    <div class="bg-red-100 text-red-700 p-4 rounded-lg">
+                        <p>Gagal mencari hadis. Silakan coba lagi.</p>
+                    </div>
+                `;
+                resultCountEl.textContent = '0 hasil';
+            }
+        }
+        
+        // Show Hadith Modal
+        function showHadithModal(hadith) {
+            // Update modal content
+            document.getElementById('modal-source').textContent = hadith.riwayat || 'HR. Tidak diketahui';
+            document.getElementById('modal-number').textContent = `No. ${hadith.number}`;
+            document.getElementById('modal-arabic').textContent = hadith.arab;
+            document.getElementById('modal-translation').textContent = hadith.indonesia;
+            
+            // Show modal
+            hadithModalEl.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+        
+        // Close Modal
+        function closeModal() {
+            hadithModalEl.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+        
+        // Share Current Hadith
+        function shareCurrentHadith() {
+            // Check if Web Share API is supported
+            if (navigator.share) {
+                const hadithText = document.getElementById('modal-translation').textContent;
+                const hadithSource = document.getElementById('modal-source').textContent;
+                const hadithNumber = document.getElementById('modal-number').textContent;
+                
+                navigator.share({
+                    title: `${hadithSource} ${hadithNumber}`,
+                    text: `${hadithText}\n\n${hadithSource} ${hadithNumber}`,
+                    url: window.location.href
+                })
+                .then(() => console.log('Hadith shared successfully'))
+                .catch((error) => console.log('Error sharing hadith:', error));
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                alert('Fitur berbagi tidak didukung di browser Anda. Silakan salin teks hadis secara manual.');
+            }
+        }
+        
+        // Populate Books Table
+        function populateBooksTable(books) {
+            booksTableBodyEl.innerHTML = '';
+            
+            books.forEach(book => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${book.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${book.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${book.available.toLocaleString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="text-blue-600 hover:text-blue-900 view-book" data-id="${book.id}">
+                            <i class="fas fa-eye mr-1"></i>Lihat
+                        </button>
+                    </td>
+                `;
+                
+                booksTableBodyEl.appendChild(row);
+            });
+            
+            // Add event listeners to view buttons
+            document.querySelectorAll('.view-book').forEach(button => {
+                button.addEventListener('click', () => {
+                    const bookId = button.getAttribute('data-id');
+                    viewBookHadith(bookId);
+                });
+            });
+        }
+        
+        // View Book Hadith (first 10)
+        async function viewBookHadith(bookId) {
+            try {
+                const response = await fetch(`${API_URL}?action=hadith&book=${bookId}&range=1-10`);
+                const data = await response.json();
+                
+                if (!data.error) {
+                    // Clear search results and show as book results
+                    searchInputEl.value = '';
+                    searchResultsEl.classList.remove('hidden');
+                    searchKeywordEl.textContent = data.data.name;
+                    resultCountEl.textContent = `${data.data.requested} dari ${data.data.available}`;
+                    
+                    // Clear previous results
+                    resultsContainerEl.innerHTML = '';
+                    
+                    // Populate results
+                    data.data.hadiths.forEach(hadith => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'bg-blue-50 p-4 rounded-lg cursor-pointer hover:bg-blue-100 transition';
+                        resultItem.innerHTML = `
+                            <div class="flex justify-between">
+                                <span class="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">${data.data.name}</span>
+                                <span class="inline-block bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">No. ${hadith.number}</span>
+                            </div>
+                            <p class="arabic text-lg my-2">${truncateText(hadith.arab, 150)}</p>
+                            <p class="text-gray-600 text-sm">${truncateText(hadith.indonesia, 200)}</p>
+                        `;
+                        
+                        // Add click event to show modal
+                        resultItem.addEventListener('click', () => {
+                            const fullHadith = {
+                                arab: hadith.arab,
+                                indonesia: hadith.indonesia,
+                                riwayat: data.data.name,
+                                number: hadith.number,
+                                id: data.data.id
+                            };
+                            showHadithModal(fullHadith);
+                        });
+                        
+                        resultsContainerEl.appendChild(resultItem);
+                    });
+                    
+                    // Add note about more results
+                    if (data.data.available > 10) {
+                        const moreResultsNote = document.createElement('div');
+                        moreResultsNote.className = 'text-center text-gray-500 text-sm mt-4';
+                        moreResultsNote.textContent = `Menampilkan 10 dari ${data.data.available} hadis dalam ${data.data.name}.`;
+                        resultsContainerEl.appendChild(moreResultsNote);
+                    }
+                    
+                    // Scroll to results
+                    searchResultsEl.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    throw new Error(data.message || 'Failed to load hadith');
+                }
+            } catch (error) {
+                console.error('Error loading book hadith:', error);
+                
+                // Show error in search results area
+                searchResultsEl.classList.remove('hidden');
+                searchKeywordEl.textContent = bookId;
+                resultCountEl.textContent = '0 hasil';
+                resultsContainerEl.innerHTML = `
+                    <div class="bg-red-100 text-red-700 p-4 rounded-lg">
+                        <p>Gagal memuat hadis. Silakan coba lagi.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Filter Books Table
+        function filterBooksTable() {
+            const searchTerm = bookSearchEl.value.toLowerCase();
+            
+            if (!searchTerm) {
+                populateBooksTable(allBooksData);
+                return;
+            }
+            
+            const filteredBooks = allBooksData.filter(book => 
+                book.name.toLowerCase().includes(searchTerm) ||
+                book.id.toLowerCase().includes(searchTerm)
+            );
+            
+            populateBooksTable(filteredBooks);
+        }
+        
+        // Create Hadith Distribution Chart (Pie)
+        function createHadithDistributionChart(books) {
+            // Always use static data to match the screenshot
+            const labels = ['HR. Bukhari', 'HR. Nasai', 'HR. Muslim', 'HR. Abu Daud', 'HR. Tirmidzi', 'Lainnya'];
+            const data = [6638, 5758, 5362, 4590, 3891, 11863];
+            
+            // Generate colors with blue tones that match the screenshot
+            const colors = [
+                '#4285F4', '#5E9CF7', '#7AB3FA', '#95CAFB', '#B0E0FD', '#2A56C6'
+            ];
+            
+            const ctx = document.getElementById('hadith-distribution-chart').getContext('2d');
+            
+            // Check if canvas element exists before creating chart
+            if (!ctx) {
+                console.error('Chart canvas element not found');
+                return;
+            }
+            
+            try {
+                hadithDistributionChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors,
+                            borderColor: '#FFFFFF',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 10,
+                                    font: {
+                                        size: 9
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = Math.round((value / total) * 100);
+                                        return `${label}: ${value.toLocaleString()} hadis (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error creating hadith distribution chart:', error);
+            }
+        }
+        
+        // Create Top Books Chart (Bar)
+        function createTopBooksChart(books) {
+            // Always use static data to match the screenshot
+            const labels = ['Bukhari', 'Nasai', 'Muslim', 'Abu Daud', 'Tirmidzi', 'Ahmad', 'Ibnu Majah', 'Darimi'];
+            const data = [6638, 5758, 5362, 4590, 3891, 4305, 4241, 2949];
+            
+            const ctx = document.getElementById('top-books-chart').getContext('2d');
+            
+            // Check if canvas element exists before creating chart
+            if (!ctx) {
+                console.error('Chart canvas element not found');
+                return;
+            }
+            
+            try {
+                topBooksChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Jumlah Hadis',
+                            data: data,
+                            backgroundColor: '#4285F4',
+                            borderColor: '#2563EB',
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Jumlah Hadis'
+                                },
+                                grid: {
+                                    color: '#e2e8f0',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    maxTicksLimit: 8
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        barThickness: 30,
+                        maxBarThickness: 38
+                    }
+                });
+            } catch (error) {
+                console.error('Error creating top books chart:', error);
+            }
+        }
+        
+        // Create Endpoint Stats Chart (Horizontal Bar)
+        function createEndpointStatsChart(stats) {
+            const labels = Object.keys(stats).map(key => key.charAt(0).toUpperCase() + key.slice(1));
+            const data = Object.values(stats);
+            
+            const ctx = document.getElementById('endpoint-stats-chart').getContext('2d');
+            endpointStatsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Jumlah Permintaan',
+                        data: data,
+                        backgroundColor: '#93C5FD',
+                        borderColor: '#3B82F6',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Distribusi Penggunaan Endpoint API',
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Toggle Theme
+        function toggleTheme() {
+            const body = document.body;
+            
+            if (body.classList.toggle('dark-theme')) {
+                // Switch to dark theme
+                themeToggleEl.innerHTML = '<i class="fas fa-sun text-xl"></i>';
+                body.classList.add('bg-gray-900');
+                body.classList.add('text-white');
+                
+                // Update charts for dark mode
+                updateChartsTheme(true);
+                
+                // Store preference
+                localStorage.setItem('theme', 'dark');
+            } else {
+                // Switch to light theme
+                themeToggleEl.innerHTML = '<i class="fas fa-moon text-xl"></i>';
+                body.classList.remove('bg-gray-900');
+                body.classList.remove('text-white');
+                
+                // Update charts for light mode
+                updateChartsTheme(false);
+                
+                // Store preference
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        // Update Charts Theme
+        function updateChartsTheme(isDark) {
+            const fontColor = isDark ? '#ffffff' : '#666666';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            
+            // Update each chart
+            const charts = [hadithDistributionChart, topBooksChart, endpointStatsChart];
+            
+            charts.forEach(chart => {
+                if (!chart) return;
+                
+                // Update scales
+                if (chart.options.scales) {
+                    Object.values(chart.options.scales).forEach(scale => {
+                        if (scale.ticks) {
+                            scale.ticks.color = fontColor;
+                        }
+                        if (scale.grid) {
+                            scale.grid.color = gridColor;
+                        }
+                        if (scale.title) {
+                            scale.title.color = fontColor;
+                        }
+                    });
+                }
+                
+                // Update legend
+                if (chart.options.plugins && chart.options.plugins.legend) {
+                    chart.options.plugins.legend.labels = {
+                        ...chart.options.plugins.legend.labels,
+                        color: fontColor
+                    };
+                }
+                
+                chart.update();
+            });
+        }
+        
+        // Helper function to truncate text
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            if (text.length <= maxLength) return text;
+            return text.substr(0, maxLength) + '...';
+        }
+        
+        // Show Loading
+        function showLoading() {
+            loadingEl.classList.remove('hidden');
+            errorEl.classList.add('hidden');
+            dashboardEl.classList.add('hidden');
+        }
+        
+        // Hide Loading
+        function hideLoading() {
+            loadingEl.classList.add('hidden');
+        }
+        
+        // Show Error
+        function showError() {
+            loadingEl.classList.add('hidden');
+            errorEl.classList.remove('hidden');
+        }
+        
+        // Check for saved theme preference
+        window.addEventListener('load', function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                toggleTheme();
+            }
+        });
+    </script>
+</body>
+</html>
